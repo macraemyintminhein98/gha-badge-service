@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>APEX: GitHub Actions Status Badge</title>
+    <style>
+        body { font-family: sans-serif; margin: 2em; line-height: 1.6; background-color: #f4f7f6; color: #333; }
+        .container { max-width: 800px; margin: auto; background: #fff; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1 { color: #2c3e50; text-align: center; margin-bottom: 1em; }
+        p { margin-bottom: 1em; }
+        label { display: block; margin-bottom: 0.5em; font-weight: bold; color: #555; }
+        input[type="text"] { width: calc(100% - 22px); padding: 10px; margin-bottom: 1em; border: 1px solid #ccc; border-radius: 4px; font-size: 1em; }
+        button { display: block; width: 100%; padding: 12px; background-color: #28a745; color: white; border: none; border-radius: 4px; font-size: 1.1em; cursor: pointer; transition: background-color 0.3s ease; }
+        button:hover { background-color: #218838; }
+        #badgeUrl, #markdownSnippet { background-color: #f8f9fa; border: 1px solid #e9ecef; padding: 10px; border-radius: 4px; margin-top: 1em; font-family: monospace; white-space: pre-wrap; word-break: break-all; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>GitHub Actions Status Badge Generator</h1>
+        <p>Generate a dynamic SVG badge for your GitHub Actions workflow status.</p>
+        <label for="repoUrl">GitHub Repository URL:</label>
+        <input type="text" id="repoUrl" placeholder="e.g., https://github.com/owner/repo">
+
+        <label for="workflowFile">Workflow File Path:</label>
+        <input type="text" id="workflowFile" placeholder="e.g., .github/workflows/main.yml">
+
+        <button onclick="generateBadgeUrl()">Generate Badge URL</button>
+
+        <div id="output" style="margin-top: 2em;">
+            <p style="font-weight: bold;">Your Badge URL:</p>
+            <pre id="badgeUrl"></pre>
+            <p style="font-weight: bold;">Markdown for README.md:</p>
+            <pre id="markdownSnippet"></pre>
+        </div>
+    </div>
+
+    <script>
+        function generateBadgeUrl() {
+            const repoUrl = document.getElementById('repoUrl').value.trim();
+            const workflowFile = document.getElementById('workflowFile').value.trim();
+
+            if (!repoUrl || !workflowFile) {
+                alert('Please enter both repository URL and workflow file path.');
+                return;
+            }
+
+            const parts = repoUrl.split('/');
+            if (parts.length < 5 || parts[2] !== 'github.com') {
+                alert('Invalid GitHub repository URL.');
+                return;
+            }
+            const owner = parts[3];
+            const repo = parts[4];
+
+            const baseUrl = window.location.origin; // In a real setup, this would be your API endpoint
+            const badgeEndpoint = `${baseUrl}/api/badge?owner=${owner}&repo=${repo}&workflow=${encodeURIComponent(workflowFile)}`;
+            
+            document.getElementById('badgeUrl').textContent = badgeEndpoint;
+            document.getElementById('markdownSnippet').textContent = `![GitHub Workflow Status](${badgeEndpoint})`;
+        }
+    </script>
+</body>
+</html>
