@@ -3,62 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>APEX: GitHub Actions Status Badge</title>
+    <title>GitHub Actions Badge Service</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <style>
-        body { font-family: sans-serif; margin: 2em; line-height: 1.6; background-color: #f4f7f6; color: #333; }
-        .container { max-width: 800px; margin: auto; background: #fff; padding: 2em; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        h1 { color: #2c3e50; text-align: center; margin-bottom: 1em; }
-        p { margin-bottom: 1em; }
-        label { display: block; margin-bottom: 0.5em; font-weight: bold; color: #555; }
-        input[type="text"] { width: calc(100% - 22px); padding: 10px; margin-bottom: 1em; border: 1px solid #ccc; border-radius: 4px; font-size: 1em; }
-        button { display: block; width: 100%; padding: 12px; background-color: #28a745; color: white; border: none; border-radius: 4px; font-size: 1.1em; cursor: pointer; transition: background-color 0.3s ease; }
-        button:hover { background-color: #218838; }
-        #badgeUrl, #markdownSnippet { background-color: #f8f9fa; border: 1px solid #e9ecef; padding: 10px; border-radius: 4px; margin-top: 1em; font-family: monospace; white-space: pre-wrap; word-break: break-all; }
+        body { background-color: #f7fafc; }
+        .container { max-width: 800px; }
+        input, button { padding: 0.75rem 1rem; border-radius: 0.375rem; border: 1px solid #e2e8f0; }
+        button { cursor: pointer; background-color: #2b6cb0; color: white; transition: background-color 0.2s; }
+        button:hover { background-color: #2c5282; }
+        img { border: 1px dashed #e2e8f0; }
     </style>
 </head>
-<body>
-    <div class="container">
-        <h1>GitHub Actions Status Badge Generator</h1>
-        <p>Generate a dynamic SVG badge for your GitHub Actions workflow status.</p>
-        <label for="repoUrl">GitHub Repository URL:</label>
-        <input type="text" id="repoUrl" placeholder="e.g., https://github.com/owner/repo">
-
-        <label for="workflowFile">Workflow File Path:</label>
-        <input type="text" id="workflowFile" placeholder="e.g., .github/workflows/main.yml">
-
-        <button onclick="generateBadgeUrl()">Generate Badge URL</button>
-
-        <div id="output" style="margin-top: 2em;">
-            <p style="font-weight: bold;">Your Badge URL:</p>
-            <pre id="badgeUrl"></pre>
-            <p style="font-weight: bold;">Markdown for README.md:</p>
-            <pre id="markdownSnippet"></pre>
+<body class="flex items-center justify-center min-h-screen">
+    <div class="container mx-auto p-6 bg-white shadow-lg rounded-lg">
+        <h1 class="text-4xl font-bold text-center mb-4 text-gray-800">GitHub Actions Status Badge</h1>
+        <p class="text-center text-gray-600 mb-8">Generate a real-time, customizable status badge for your GitHub Actions workflows.</p>
+        
+        <div class="mb-6">
+            <label for="repo" class="block text-gray-700 text-sm font-bold mb-2">GitHub Repository (e.g., owner/repo):</label>
+            <input type="text" id="repo" class="w-full focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="octocat/Spoon-Knife">
         </div>
+
+        <div class="mb-6">
+            <label for="workflow" class="block text-gray-700 text-sm font-bold mb-2">Workflow File Name (e.g., ci.yml):</label>
+            <input type="text" id="workflow" class="w-full focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="main.yml">
+        </div>
+
+        <button onclick="generateBadge()" class="w-full mb-8 font-semibold">Generate Badge URL</button>
+
+        <div id="result" class="hidden">
+            <h2 class="text-2xl font-bold mb-4 text-gray-800">Your Badge:</h2>
+            <img id="badgeImage" class="mx-auto mb-4" src="" alt="GitHub Actions Status Badge">
+            <label for="badgeUrl" class="block text-gray-700 text-sm font-bold mb-2">Badge URL:</label>
+            <input type="text" id="badgeUrl" class="w-full mb-4 bg-gray-100 cursor-text" readonly onclick="this.select();">
+            <label for="markdownCode" class="block text-gray-700 text-sm font-bold mb-2">Markdown:</label>
+            <textarea id="markdownCode" class="w-full h-24 bg-gray-100 cursor-text resize-none focus:outline-none" readonly onclick="this.select();"></textarea>
+        </div>
+
+        <p class="text-center text-gray-500 text-xs mt-8">
+            Powered by GitHub Actions API. <span class="font-bold">No login required.</span>
+        </p>
     </div>
 
     <script>
-        function generateBadgeUrl() {
-            const repoUrl = document.getElementById('repoUrl').value.trim();
-            const workflowFile = document.getElementById('workflowFile').value.trim();
+        function generateBadge() {
+            const repo = document.getElementById('repo').value;
+            const workflow = document.getElementById('workflow').value;
 
-            if (!repoUrl || !workflowFile) {
-                alert('Please enter both repository URL and workflow file path.');
+            if (!repo || !workflow) {
+                alert('Please enter both repository and workflow file name.');
                 return;
             }
 
-            const parts = repoUrl.split('/');
-            if (parts.length < 5 || parts[2] !== 'github.com') {
-                alert('Invalid GitHub repository URL.');
-                return;
-            }
-            const owner = parts[3];
-            const repo = parts[4];
+            const baseUrl = window.location.origin; // In production, this would be your API endpoint
+            const badgePath = `/api/badge?repo=${repo}&workflow=${workflow}`;
+            const fullUrl = `https://your-api-domain.com${badgePath}`; // Replace with your actual API domain
 
-            const baseUrl = window.location.origin; // In a real setup, this would be your API endpoint
-            const badgeEndpoint = `${baseUrl}/api/badge?owner=${owner}&repo=${repo}&workflow=${encodeURIComponent(workflowFile)}`;
-            
-            document.getElementById('badgeUrl').textContent = badgeEndpoint;
-            document.getElementById('markdownSnippet').textContent = `![GitHub Workflow Status](${badgeEndpoint})`;
+            document.getElementById('badgeImage').src = fullUrl;
+            document.getElementById('badgeUrl').value = fullUrl;
+            document.getElementById('markdownCode').value = `![GitHub Actions Status](${fullUrl})`;
+            document.getElementById('result').classList.remove('hidden');
         }
     </script>
 </body>
